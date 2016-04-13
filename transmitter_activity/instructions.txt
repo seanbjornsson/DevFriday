@@ -1,0 +1,50 @@
+dev friday planning
+
+
+app telephone
+- step 0) Get your IP address from `ifconfig`, en0
+
+- step 1) Create a server that accepts POST to `/messages` and binds to the external interface(0.0.0.0).
+          It accepts a json payload formatted as follows:
+            { data: { urls: [127.0.0.1, 127.0.0.2, 127.0.0.3], id: 1, content: 'hello, world.' }}
+
+          The server should log (puts) the original content,
+          change the content (however you see fit),
+          and pass it to the first IP address in data[:urls] same json format (id unchanged).
+          Pop the first IP such that the outgoing list is [127.0.0.2, 127.0.0.3]
+
+          Add a `sleep(1)` call to your controller action, so we can observer the transmissions slowed down.
+
+          Pro (Rails) tip: start your rails server with `rails s -b 0.0.0.0`
+                           Add `config.log_level = :error` to development.rb
+
+- step 2) Make the above asynchronous to allow for a new request before a response.
+          Add the following (or equivalent) to your async request:
+            rescue StandardError => e
+              puts e.message
+            end
+          to observe connection timeouts.
+          Add the IP addr that you pop to the end of the list.
+            such that if you reveive
+              { data: { urls: [127.0.0.1, 127.0.0.2, 127.0.0.3], id: 1, content: 'hello, world.' }}
+            you should send
+              { data: { urls: [127.0.0.2, 127.0.0.3000, 127.0.0.1], id: 1, content: 'hello, world.' }}
+
+- step 3) Pass the outgoing message to `/broker_messages` in addition to the original IP.
+          Also change the previous error handling to send the URL of a
+          timed out request as the content to `/broker_errors`.
+
+          Remove the sleep command
+
+- step 4) experiment with passing to multiple IPs
+
+- step 5) Add another field to the json payload called 'ips'
+            { ips: [ip1, ip2, ...], data: { id: 1, content: 'hello, world.' }}
+          Now, when you receive the json payload, send the next request to 'ip1' (see example).
+          Before sending, adjust the list of ips to be [ip2, ip3, ..., ip1]
+
+- step 6) If you get an error, you can remove that IP from the list, and continue
+
+
+curl -H "Content-Type: application/json" -X POST -d '{ "data": { "id":-1, "content":"all your base are" } }' http://192.168.2.196:3000/messages
+
