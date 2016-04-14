@@ -6,37 +6,43 @@ class MessagesController < ApplicationController
 
     puts incoming_message
 
-    # outgoing_message = incoming_message[:content][-5..-1] + 'wow'
+    outgoing_message = incoming_message[:content][-5..-1] + 'wow'
 
-    # 1.times{
-    #   Thread.new{
-    #     begin
-          # send_message(incoming_message[:id], incoming_message[:urls][1..-1], incoming_message[:content], 'http://192.168.2.196:3000/messages')
-    #     rescue StandardError => e
-    #       Thread.new{ send_message(incoming_message[:id], 'http://192.168.2.196:3000/messages', 'http://192.168.2.196:3001/broker_errors') }
-    #     end
-    #   }
-    # }
+    ip_addrs = incoming_message[:ip_addrs]
+    next_addr = ip_addrs.first
+    new_ip_addr_list = ip_addrs[1..-1] << next_addr
 
-    # Thread.new{
-    #   begin
-    #     send_message(incoming_message[:id], incoming_message[:content], 'http://192.168.2.196:3001/broker_messages')
-    #   rescue StandardError => e
-    #     puts e.message
-    #   end
-    # }
+    broker_ip_addr = 'some.ip.addr.here'
+
+    sleep 1
+
+    Thread.new{
+      begin
+        send_message(incoming_message[:id], new_ip_addr_list, outgoing_message, "http://#{next_addr}:3000/messages")
+      rescue StandardError => e
+        Thread.new{ send_message(incoming_message[:id], "http://#{broker_ip_addr}:3000/messages", "http://#{broker_ip_addr}:3001/broker_errors") }
+      end
+    }
+
+    Thread.new{
+      begin
+        send_message(incoming_message[:id], new_ip_addr_list, outgoing_message, "http://#{broker_ip_addr}:3001/broker_messages")
+      rescue StandardError => e
+        puts e.message
+      end
+    }
 
     head :no_content, status: :ok
   end
 
   private
 
-  def send_message(id, urls, content, destination)
+  def send_message(id, ip_addrs, content, destination)
     conn = Faraday.new(:url => destination)
 
     message = {
       data: {
-        urls: urls,
+        ip_addrs: ip_addrs,
         id: id,
         content: content,
       }
@@ -50,6 +56,11 @@ class MessagesController < ApplicationController
   end
 end
 
+
+
+
+
+# for testing purposes
 def test_post(ip, name, redirect_ip)
   require 'faraday'
 
@@ -57,7 +68,7 @@ def test_post(ip, name, redirect_ip)
 
   message = {
     data: {
-      urls: ["192.168.2.#{redirect_ip}"],
+      ip_addrs: ["192.168.2.#{redirect_ip}"],
       id: 1,
       content: "Howdy #{name}",
     }
