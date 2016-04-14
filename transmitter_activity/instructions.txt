@@ -19,29 +19,28 @@ app telephone
                            Add `config.log_level = :error` to development.rb
 
 - step 2) Make the above asynchronous to allow for a new request before a response.
-          Add the following (or equivalent) to your async request:
+
+- step 3) Add the following (or equivalent) to your async request:
             rescue StandardError => e
               puts e.message
             end
           to observe connection timeouts.
-          Add the IP addr that you pop to the end of the list.
-            such that if you reveive
-              { data: { urls: [127.0.0.1, 127.0.0.2, 127.0.0.3], id: 1, content: 'hello, world.' }}
-            you should send
-              { data: { urls: [127.0.0.2, 127.0.0.3000, 127.0.0.1], id: 1, content: 'hello, world.' }}
 
-- step 3) Pass the outgoing message to `/broker_messages` in addition to the original IP.
+- step 4) Pass the outgoing message to `/broker_messages` in addition to the original IP.
           Also change the previous error handling to send the URL of a
           timed out request as the content to `/broker_errors`.
 
+- step 5) Add the IP addr that you pop to the end of the list.
+            such that if you receive
+              { data: { urls: [127.0.0.1, 127.0.0.2, 127.0.0.3], id: 1, content: 'hello, world.' }}
+            you should send
+              { data: { urls: [127.0.0.2, 127.0.0.3, 127.0.0.1], id: 1, content: 'hello, world.' }}
+
           Remove the sleep command
 
-- step 4) experiment with passing to multiple IPs
+- step 6) experiment with passing to multiple IPs
 
-- step 5) Before sending, adjust the list of ips to be [ip2, ip3, ..., ip1].
-          Essentially add the first IP to the end, instead of popping it off the list.
-
-- step 6) If you get an error, you can remove that IP from the list, and continue
+- step 7) If you get an error, you can remove that IP from the list, and continue
 
 
 curl -H "Content-Type: application/json" -X POST -d '{ "data": { "id":-1, "content":"all your base are" } }' http://192.168.2.196:3000/messages
