@@ -6,7 +6,7 @@ app telephone
 
 - step 1) Create a server that accepts POST to `/messages` and binds to the external interface(0.0.0.0).
           It accepts a json payload formatted as follows:
-            { data: { urls: [127.0.0.1, 127.0.0.2, 127.0.0.3], id: 1, content: 'hello, world.' }}
+            { data: { ip_addrs: [127.0.0.1, 127.0.0.2, 127.0.0.3], id: 1, content: 'hello, world.' }}
 
           The server should log (puts) the original content,
           change the content (however you see fit),
@@ -38,10 +38,8 @@ app telephone
 
 - step 4) experiment with passing to multiple IPs
 
-- step 5) Add another field to the json payload called 'ips'
-            { ips: [ip1, ip2, ...], data: { id: 1, content: 'hello, world.' }}
-          Now, when you receive the json payload, send the next request to 'ip1' (see example).
-          Before sending, adjust the list of ips to be [ip2, ip3, ..., ip1]
+- step 5) Before sending, adjust the list of ips to be [ip2, ip3, ..., ip1].
+          Essentially add the first IP to the end, instead of popping it off the list.
 
 - step 6) If you get an error, you can remove that IP from the list, and continue
 
